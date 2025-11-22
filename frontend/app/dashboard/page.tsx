@@ -1,141 +1,197 @@
 "use client";
 import { useState, useEffect, FormEvent } from "react";
-import { AppContent } from "@/types";
-import { Trash2, Plus, UploadCloud, LayoutDashboard } from "lucide-react";
+import { AppContent, HeroSlide, Initiative } from "@/types";
+import { Trash2, Plus, UploadCloud, Edit3, Image as ImageIcon } from "lucide-react";
 
-const API = "http://localhost:4100/api";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100/api";
 
-export default function Dashboard() {
+export default function DashboardHome() {
   const [data, setData] = useState<AppContent | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  const [slideForm, setSlideForm] = useState({ title: "", subtitle: "", href: "" });
-  const [slideFile, setSlideFile] = useState<File | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-  // Initiative Form State
+  const [slideForm, setSlideForm] = useState({ title: "", subtitle: "", href: "", src: "" });
+  const [slideFile, setSlideFile] = useState<File | null>(null);
+  const [editingSlide, setEditingSlide] = useState<number | null>(null);
+
+  const [heroImage, setHeroImage] = useState("");
+  const [heroImageFile, setHeroImageFile] = useState<File | null>(null);
+
   const [initForm, setInitForm] = useState({ title: "", desc: "", tag: "", amount: "" });
+  const [editingInit, setEditingInit] = useState<number | null>(null);
 
   const refresh = async () => {
     try {
       const res = await fetch(`${API}/content`);
       const json = await res.json();
       setData(json);
-    } catch(e) { console.error(e) } finally { setLoading(false); }
+      setHeroImage(json.heroImage || "");
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    setToken(localStorage.getItem("dashboard_token"));
+    refresh();
+  }, []);
 
-  const handleAddSlide = async (e: FormEvent) => {
+  const handleSubmitSlide = async (e: FormEvent) => {
     e.preventDefault();
-    if (!slideFile) return alert("الرجاء اختيار صورة");
+    if (!token) return alert("الرجاء تسجيل الدخول مجدداً");
     const formData = new FormData();
-    formData.append("image", slideFile);
+    if (slideFile) formData.append("image", slideFile);
     formData.append("title", slideForm.title);
     formData.append("subtitle", slideForm.subtitle);
     formData.append("href", slideForm.href);
-    await fetch(`${API}/hero`, { method: "POST", body: formData });
-    setSlideForm({ title: "", subtitle: "", href: "" });
+    if (slideForm.src) formData.append("src", slideForm.src);
+
+    const url = editingSlide ? `${API}/dashboard/hero/${editingSlide}` : `${API}/dashboard/hero`;
+    await fetch(url, {
+      method: editingSlide ? "PUT" : "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    setSlideForm({ title: "", subtitle: "", href: "", src: "" });
     setSlideFile(null);
+    setEditingSlide(null);
     refresh();
   };
 
-  const handleAddInitiative = async (e: FormEvent) => {
+  const handleDeleteSlide = async (id: number) => {
+    if (!token) return;
+    if (!confirm("حذف هذه الشريحة؟")) return;
+    await fetch(`${API}/dashboard/hero/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    refresh();
+  };
+
+  const handleSaveHeroImage = async (e: FormEvent) => {
     e.preventDefault();
-    await fetch(`${API}/initiatives`, { 
-        method: "POST", 
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(initForm) 
+    if (!token) return;
+    const formData = new FormData();
+    if (heroImageFile) formData.append("image", heroImageFile);
+    if (heroImage) formData.append("heroImage", heroImage);
+    await fetch(`${API}/dashboard/hero-image`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    setHeroImageFile(null);
+    refresh();
+  };
+
+  const handleSubmitInitiative = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!token) return;
+    const url = editingInit ? `${API}/dashboard/initiatives/${editingInit}` : `${API}/dashboard/initiatives`;
+    await fetch(url, {
+      method: editingInit ? "PUT" : "POST",
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(initForm)
     });
     setInitForm({ title: "", desc: "", tag: "", amount: "" });
+    setEditingInit(null);
     refresh();
   };
 
-  const handleDelete = async (type: "hero" | "initiatives", id: number) => {
-    if(!confirm("هل أنت متأكد؟")) return;
-    await fetch(`${API}/${type}/${id}`, { method: "DELETE" });
+  const handleDeleteInitiative = async (id: number) => {
+    if (!token) return;
+    if (!confirm("حذف المبادرة؟")) return;
+    await fetch(`${API}/dashboard/initiatives/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
     refresh();
   };
 
   if (loading || !data) return <div className="min-h-screen flex items-center justify-center text-teal-600">جاري التحميل...</div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8 font-sans" dir="rtl">
-      <div className="max-w-6xl mx-auto space-y-10">
-        <header className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm">
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <LayoutDashboard className="text-teal-600"/> لوحة التحكم
-          </h1>
-          <a href="/" className="text-teal-600 hover:bg-teal-50 px-4 py-2 rounded-lg transition">العودة للموقع</a>
-        </header>
+    <div className="space-y-8" dir="rtl">
+      <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-800">
+          <UploadCloud size={24} className="text-teal-600"/> إدارة شرائح الهيرو
+        </h2>
 
-        {/* Hero Management */}
-        <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-800">
-            <UploadCloud size={24} className="text-teal-600"/> إدارة شرائح الهيرو
-          </h2>
-          
-          <form onSubmit={handleAddSlide} className="grid md:grid-cols-2 gap-4 mb-8 bg-slate-50 p-6 rounded-xl border border-slate-200">
-            <input className="input-field" placeholder="العنوان الرئيسي" value={slideForm.title} onChange={e => setSlideForm({...slideForm, title: e.target.value})} required />
-            <input className="input-field" placeholder="العنوان الفرعي" value={slideForm.subtitle} onChange={e => setSlideForm({...slideForm, subtitle: e.target.value})} />
-            <input className="input-field" placeholder="رابط الزر (اختياري)" value={slideForm.href} onChange={e => setSlideForm({...slideForm, href: e.target.value})} />
-            <div className="flex items-center gap-2">
-                <input type="file" accept="image/*" className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" onChange={e => setSlideFile(e.target.files?.[0] || null)} required />
-            </div>
-            <button type="submit" className="md:col-span-2 bg-teal-600 text-white font-bold py-3 rounded-lg hover:bg-teal-700 transition flex justify-center items-center gap-2">
-              <Plus size={18}/> إضافة شريحة
-            </button>
-          </form>
+        <form onSubmit={handleSubmitSlide} className="grid md:grid-cols-2 gap-4 mb-8 bg-slate-50 p-6 rounded-xl border border-slate-200">
+          <input className="input-field" placeholder="العنوان الرئيسي" value={slideForm.title} onChange={e => setSlideForm({ ...slideForm, title: e.target.value })} required />
+          <input className="input-field" placeholder="العنوان الفرعي" value={slideForm.subtitle} onChange={e => setSlideForm({ ...slideForm, subtitle: e.target.value })} />
+          <input className="input-field" placeholder="رابط الزر (اختياري)" value={slideForm.href} onChange={e => setSlideForm({ ...slideForm, href: e.target.value })} />
+          <input className="input-field" placeholder="رابط صورة بديل (اختياري)" value={slideForm.src} onChange={e => setSlideForm({ ...slideForm, src: e.target.value })} />
+          <div className="flex items-center gap-2">
+            <input type="file" accept="image/*" className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" onChange={e => setSlideFile(e.target.files?.[0] || null)} />
+          </div>
+          <button type="submit" className="md:col-span-2 bg-teal-600 text-white font-bold py-3 rounded-lg hover:bg-teal-700 transition flex justify-center items-center gap-2">
+            {editingSlide ? <Edit3 size={18}/> : <Plus size={18}/>}
+            {editingSlide ? "تحديث الشريحة" : "إضافة شريحة"}
+          </button>
+        </form>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {data.heroSlides.map(slide => (
-              <div key={slide.id} className="relative group rounded-xl overflow-hidden shadow-md border border-slate-200">
-                <div className="h-48 w-full relative">
-                    <img src={slide.src} alt={slide.title} className="w-full h-full object-cover" />
-                </div>
-                <div className="absolute top-2 left-2">
-                  <button onClick={() => handleDelete("hero", slide.id)} className="bg-red-500/90 text-white p-2 rounded-full hover:bg-red-600 transition shadow-sm">
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-                <div className="p-4 bg-white">
-                  <p className="font-bold text-slate-800 truncate">{slide.title}</p>
-                  <p className="text-sm text-slate-500 truncate">{slide.subtitle}</p>
-                </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {data.heroSlides.map((slide: HeroSlide) => (
+            <div key={slide.id} className="relative group rounded-xl overflow-hidden shadow-md border border-slate-200">
+              <div className="h-48 w-full relative">
+                <img src={slide.src} alt={slide.title} className="w-full h-full object-cover" />
               </div>
-            ))}
-          </div>
-        </section>
+              <div className="absolute top-2 left-2 flex gap-2">
+                <button onClick={() => handleDeleteSlide(slide.id)} className="bg-red-500/90 text-white p-2 rounded-full hover:bg-red-600 transition shadow-sm">
+                  <Trash2 size={18} />
+                </button>
+                <button onClick={() => { setEditingSlide(slide.id); setSlideForm({ title: slide.title, subtitle: slide.subtitle, href: slide.href || "", src: slide.src }); }} className="bg-white text-slate-800 p-2 rounded-full shadow">
+                  <Edit3 size={18} />
+                </button>
+              </div>
+              <div className="p-4 bg-white space-y-1">
+                <p className="font-bold text-slate-800 truncate">{slide.title}</p>
+                <p className="text-sm text-slate-500 truncate">{slide.subtitle}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
-        {/* Initiatives Management */}
-        <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h2 className="text-xl font-bold mb-6 text-slate-800">إضافة مبادرة جديدة</h2>
-          <form onSubmit={handleAddInitiative} className="grid md:grid-cols-2 gap-4 bg-slate-50 p-6 rounded-xl border border-slate-200">
-            <input className="input-field" placeholder="عنوان المبادرة" value={initForm.title} onChange={e => setInitForm({...initForm, title: e.target.value})} required />
-            <input className="input-field" placeholder="الوسم (مثال: مياه)" value={initForm.tag} onChange={e => setInitForm({...initForm, tag: e.target.value})} required />
-            <input className="input-field" placeholder="المبلغ (مثال: 500 ر.س)" value={initForm.amount} onChange={e => setInitForm({...initForm, amount: e.target.value})} />
-            <textarea className="input-field md:col-span-2" placeholder="الوصف" value={initForm.desc} onChange={e => setInitForm({...initForm, desc: e.target.value})} required rows={3} />
-            <button type="submit" className="md:col-span-2 bg-teal-600 text-white font-bold py-3 rounded-lg hover:bg-teal-700 transition">حفظ المبادرة</button>
-          </form>
-          
-          <div className="mt-6 space-y-4">
-            {data.initiatives.map(item => (
-                <div key={item.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <div>
-                        <h4 className="font-bold text-slate-800">{item.title}</h4>
-                        <span className="text-xs bg-teal-100 text-teal-800 px-2 py-1 rounded">{item.tag}</span>
-                    </div>
-                    <button onClick={() => handleDelete("initiatives", item.id)} className="text-red-500 hover:text-red-700"><Trash2 size={20}/></button>
-                </div>
-            ))}
+      <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-800">
+          <ImageIcon size={20} className="text-teal-600" /> صورة الهيرو الأساسية
+        </h2>
+        <form onSubmit={handleSaveHeroImage} className="grid md:grid-cols-2 gap-4 bg-slate-50 p-6 rounded-xl border border-slate-200">
+          <input className="input-field" placeholder="رابط صورة" value={heroImage} onChange={(e) => setHeroImage(e.target.value)} />
+          <input type="file" accept="image/*" onChange={(e) => setHeroImageFile(e.target.files?.[0] || null)} />
+          <button type="submit" className="md:col-span-2 bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-900">حفظ الصورة</button>
+        </form>
+        {heroImage && (
+          <div className="mt-4">
+            <img src={heroImage} alt="Hero" className="rounded-xl border border-slate-200 w-full max-h-64 object-cover" />
           </div>
-        </section>
-      </div>
-      
-      <style jsx global>{`
-        .input-field {
-            @apply p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white;
-        }
-      `}</style>
+        )}
+      </section>
+
+      <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <h2 className="text-xl font-bold mb-6 text-slate-800">إدارة المبادرات</h2>
+        <form onSubmit={handleSubmitInitiative} className="grid md:grid-cols-2 gap-4 bg-slate-50 p-6 rounded-xl border border-slate-200">
+          <input className="input-field" placeholder="عنوان المبادرة" value={initForm.title} onChange={e => setInitForm({ ...initForm, title: e.target.value })} required />
+          <input className="input-field" placeholder="الوسم (مثال: مياه)" value={initForm.tag} onChange={e => setInitForm({ ...initForm, tag: e.target.value })} required />
+          <input className="input-field" placeholder="المبلغ (مثال: 500 ر.س)" value={initForm.amount} onChange={e => setInitForm({ ...initForm, amount: e.target.value })} />
+          <textarea className="input-field md:col-span-2" placeholder="الوصف" value={initForm.desc} onChange={e => setInitForm({ ...initForm, desc: e.target.value })} required rows={3} />
+          <button type="submit" className="md:col-span-2 bg-teal-600 text-white font-bold py-3 rounded-lg hover:bg-teal-700 transition flex items-center justify-center gap-2">
+            {editingInit ? <Edit3 size={18}/> : <Plus size={18}/>} {editingInit ? "تحديث" : "حفظ"}
+          </button>
+        </form>
+
+        <div className="mt-6 space-y-4">
+          {data.initiatives.map((item: Initiative) => (
+            <div key={item.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <div>
+                <h4 className="font-bold text-slate-800">{item.title}</h4>
+                <span className="text-xs bg-teal-100 text-teal-800 px-2 py-1 rounded">{item.tag}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => { setEditingInit(item.id); setInitForm({ title: item.title, desc: item.desc, tag: item.tag, amount: item.amount }); }} className="text-slate-600 hover:text-teal-700"><Edit3 size={18}/></button>
+                <button onClick={() => handleDeleteInitiative(item.id)} className="text-red-500 hover:text-red-700"><Trash2 size={20}/></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
