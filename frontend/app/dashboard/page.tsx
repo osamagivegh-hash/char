@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, FormEvent } from "react";
-import { AppContent, HeroSlide, Initiative } from "@/types";
+import { AppContent, HeroSlide, Initiative, Program } from "@/types";
 import { Trash2, Plus, UploadCloud, Edit3, Image as ImageIcon } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100/api";
@@ -19,6 +19,9 @@ export default function DashboardHome() {
 
   const [initForm, setInitForm] = useState({ title: "", desc: "", tag: "", amount: "" });
   const [editingInit, setEditingInit] = useState<number | null>(null);
+
+  const [programForm, setProgramForm] = useState({ title: "", desc: "", icon: "" });
+  const [editingProgram, setEditingProgram] = useState<number | null>(null);
 
   const refresh = async () => {
     try {
@@ -100,6 +103,27 @@ export default function DashboardHome() {
     if (!token) return;
     if (!confirm("حذف المبادرة؟")) return;
     await fetch(`${API}/dashboard/initiatives/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    refresh();
+  };
+
+  const handleSubmitProgram = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!token) return alert("الرجاء تسجيل الدخول مجدداً");
+    const url = editingProgram ? `${API}/dashboard/programs/${editingProgram}` : `${API}/dashboard/programs`;
+    await fetch(url, {
+      method: editingProgram ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(programForm),
+    });
+    setProgramForm({ title: "", desc: "", icon: "" });
+    setEditingProgram(null);
+    refresh();
+  };
+
+  const handleDeleteProgram = async (id: number) => {
+    if (!token) return;
+    if (!confirm("حذف البرنامج؟")) return;
+    await fetch(`${API}/dashboard/programs/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
     refresh();
   };
 
@@ -187,6 +211,65 @@ export default function DashboardHome() {
               <div className="flex items-center gap-2">
                 <button onClick={() => { setEditingInit(item.id); setInitForm({ title: item.title, desc: item.desc, tag: item.tag, amount: item.amount }); }} className="text-slate-600 hover:text-teal-700"><Edit3 size={18}/></button>
                 <button onClick={() => handleDeleteInitiative(item.id)} className="text-red-500 hover:text-red-700"><Trash2 size={20}/></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <h2 className="text-xl font-bold mb-6 text-slate-800">إدارة البرامج</h2>
+        <form onSubmit={handleSubmitProgram} className="grid md:grid-cols-2 gap-4 bg-slate-50 p-6 rounded-xl border border-slate-200">
+          <input
+            className="input-field"
+            placeholder="عنوان البرنامج"
+            value={programForm.title}
+            onChange={(e) => setProgramForm({ ...programForm, title: e.target.value })}
+            required
+          />
+          <input
+            className="input-field"
+            placeholder="أيقونة (نص أو رمز)"
+            value={programForm.icon}
+            onChange={(e) => setProgramForm({ ...programForm, icon: e.target.value })}
+          />
+          <textarea
+            className="input-field md:col-span-2"
+            placeholder="الوصف"
+            value={programForm.desc}
+            onChange={(e) => setProgramForm({ ...programForm, desc: e.target.value })}
+            required
+            rows={3}
+          />
+          <button
+            type="submit"
+            className="md:col-span-2 bg-teal-600 text-white font-bold py-3 rounded-lg hover:bg-teal-700 transition flex items-center justify-center gap-2"
+          >
+            {editingProgram ? <Edit3 size={18} /> : <Plus size={18} />} {editingProgram ? "تحديث البرنامج" : "إضافة برنامج"}
+          </button>
+        </form>
+
+        <div className="mt-6 space-y-4">
+          {data.programs.map((program: Program) => (
+            <div key={program.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <div>
+                <div className="text-2xl">{program.icon || "📌"}</div>
+                <h4 className="font-bold text-slate-800">{program.title}</h4>
+                <p className="text-sm text-slate-600">{program.desc}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setEditingProgram(program.id);
+                    setProgramForm({ title: program.title, desc: program.desc, icon: program.icon });
+                  }}
+                  className="text-slate-600 hover:text-teal-700"
+                >
+                  <Edit3 size={18} />
+                </button>
+                <button onClick={() => handleDeleteProgram(program.id)} className="text-red-500 hover:text-red-700">
+                  <Trash2 size={20} />
+                </button>
               </div>
             </div>
           ))}
