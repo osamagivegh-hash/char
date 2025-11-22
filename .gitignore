@@ -1,0 +1,20 @@
+# Dependencies
+node_modules
+package-lock.json
+
+# Build outputs
+.next
+dist
+build
+
+# Environment variables
+.env
+.env.local
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Uploaded files (يفضل عدم رفع صور المستخدمين للجيت)
+backend/uploads/*
+!backend/uploads/.gitkeep

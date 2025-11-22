@@ -1,0 +1,23 @@
+# Ignore node modules everywhere
+node_modules/
+
+# Ignore Next.js build output
+.next/
+
+# Ignore dist folders (if any)
+dist/
+
+# Ignore environment variables
+.env
+.env.local
+
+# Ignore uploaded images
+uploads/
+
+# ignore logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ignore lock from git issues
+.git/index.lock
