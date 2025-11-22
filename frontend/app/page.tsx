@@ -5,7 +5,8 @@ import { AppContent } from "@/types";
 
 async function getData(): Promise<AppContent> {
   try {
-    const res = await fetch("http://localhost:4100/api/content", { cache: "no-store" });
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4100/api";
+    const res = await fetch(`${baseUrl}/content`, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed");
     return res.json();
   } catch (e) {
