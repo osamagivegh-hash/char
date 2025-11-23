@@ -1,9 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --app-font: 'Cairo', system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
 body {
   @apply bg-slate-50 text-slate-900;
+  font-family: var(--app-font);
 }
 
 .input-field {

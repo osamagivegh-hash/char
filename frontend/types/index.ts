@@ -11,12 +11,16 @@ export interface Initiative {
   desc: string;
   tag: string;
   amount: string;
+  image?: string;
+  link?: string;
 }
 export interface Program {
   id: number;
   title: string;
   desc: string;
   icon: string;
+  image?: string;
+  link?: string;
 }
 export interface Message {
   id: number;
