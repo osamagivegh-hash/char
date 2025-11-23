@@ -17,10 +17,10 @@ export default function DashboardHome() {
   const [heroImage, setHeroImage] = useState("");
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null);
 
-  const [initForm, setInitForm] = useState({ title: "", desc: "", tag: "", amount: "" });
+  const [initForm, setInitForm] = useState({ title: "", desc: "", tag: "", amount: "", image: "", link: "" });
   const [editingInit, setEditingInit] = useState<number | null>(null);
 
-  const [programForm, setProgramForm] = useState({ title: "", desc: "", icon: "" });
+  const [programForm, setProgramForm] = useState({ title: "", desc: "", icon: "", image: "", link: "" });
   const [editingProgram, setEditingProgram] = useState<number | null>(null);
 
   const refresh = async () => {
@@ -94,7 +94,7 @@ export default function DashboardHome() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(initForm)
     });
-    setInitForm({ title: "", desc: "", tag: "", amount: "" });
+    setInitForm({ title: "", desc: "", tag: "", amount: "", image: "", link: "" });
     setEditingInit(null);
     refresh();
   };
@@ -115,7 +115,7 @@ export default function DashboardHome() {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(programForm),
     });
-    setProgramForm({ title: "", desc: "", icon: "" });
+    setProgramForm({ title: "", desc: "", icon: "", image: "", link: "" });
     setEditingProgram(null);
     refresh();
   };
@@ -195,6 +195,8 @@ export default function DashboardHome() {
           <input className="input-field" placeholder="عنوان المبادرة" value={initForm.title} onChange={e => setInitForm({ ...initForm, title: e.target.value })} required />
           <input className="input-field" placeholder="الوسم (مثال: مياه)" value={initForm.tag} onChange={e => setInitForm({ ...initForm, tag: e.target.value })} required />
           <input className="input-field" placeholder="المبلغ (مثال: 500 ر.س)" value={initForm.amount} onChange={e => setInitForm({ ...initForm, amount: e.target.value })} />
+          <input className="input-field" placeholder="رابط صورة المبادرة" value={initForm.image} onChange={e => setInitForm({ ...initForm, image: e.target.value })} />
+          <input className="input-field" placeholder="رابط التفاصيل" value={initForm.link} onChange={e => setInitForm({ ...initForm, link: e.target.value })} />
           <textarea className="input-field md:col-span-2" placeholder="الوصف" value={initForm.desc} onChange={e => setInitForm({ ...initForm, desc: e.target.value })} required rows={3} />
           <button type="submit" className="md:col-span-2 bg-teal-600 text-white font-bold py-3 rounded-lg hover:bg-teal-700 transition flex items-center justify-center gap-2">
             {editingInit ? <Edit3 size={18}/> : <Plus size={18}/>} {editingInit ? "تحديث" : "حفظ"}
@@ -209,7 +211,22 @@ export default function DashboardHome() {
                 <span className="text-xs bg-teal-100 text-teal-800 px-2 py-1 rounded">{item.tag}</span>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => { setEditingInit(item.id); setInitForm({ title: item.title, desc: item.desc, tag: item.tag, amount: item.amount }); }} className="text-slate-600 hover:text-teal-700"><Edit3 size={18}/></button>
+                <button
+                  onClick={() => {
+                    setEditingInit(item.id);
+                    setInitForm({
+                      title: item.title,
+                      desc: item.desc,
+                      tag: item.tag,
+                      amount: item.amount,
+                      image: item.image || "",
+                      link: item.link || "",
+                    });
+                  }}
+                  className="text-slate-600 hover:text-teal-700"
+                >
+                  <Edit3 size={18}/>
+                </button>
                 <button onClick={() => handleDeleteInitiative(item.id)} className="text-red-500 hover:text-red-700"><Trash2 size={20}/></button>
               </div>
             </div>
@@ -232,6 +249,18 @@ export default function DashboardHome() {
             placeholder="أيقونة (نص أو رمز)"
             value={programForm.icon}
             onChange={(e) => setProgramForm({ ...programForm, icon: e.target.value })}
+          />
+          <input
+            className="input-field"
+            placeholder="رابط صورة البرنامج"
+            value={programForm.image}
+            onChange={(e) => setProgramForm({ ...programForm, image: e.target.value })}
+          />
+          <input
+            className="input-field"
+            placeholder="رابط التفاصيل"
+            value={programForm.link}
+            onChange={(e) => setProgramForm({ ...programForm, link: e.target.value })}
           />
           <textarea
             className="input-field md:col-span-2"
@@ -261,7 +290,13 @@ export default function DashboardHome() {
                 <button
                   onClick={() => {
                     setEditingProgram(program.id);
-                    setProgramForm({ title: program.title, desc: program.desc, icon: program.icon });
+                    setProgramForm({
+                      title: program.title,
+                      desc: program.desc,
+                      icon: program.icon,
+                      image: program.image || "",
+                      link: program.link || "",
+                    });
                   }}
                   className="text-slate-600 hover:text-teal-700"
                 >

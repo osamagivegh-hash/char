@@ -21,11 +21,12 @@ export default function Hero({ slides }: { slides: HeroSlide[] }) {
     return () => clearInterval(timer);
   }, [next, slides.length]);
 
-  if (!slides.length) return <div className="h-96 bg-slate-200 flex items-center justify-center">لا توجد شرائح للعرض</div>;
+  if (!slides.length)
+    return <div className="h-96 bg-gradient-to-l from-teal-700 to-cyan-500 text-white flex items-center justify-center rounded-b-[48px] shadow-lg">لا توجد شرائح للعرض</div>;
 
   return (
-    <div className="relative h-[600px] w-full overflow-hidden bg-slate-900" dir="ltr">
-      <div 
+    <div className="relative h-[600px] w-full overflow-hidden bg-slate-900 rounded-b-[48px] shadow-2xl shadow-teal-900/20" dir="ltr">
+      <div
         className="flex h-full transition-transform duration-700 ease-in-out"
         style={{ transform: `translateX(-${current * 100}%)` }}
       >
