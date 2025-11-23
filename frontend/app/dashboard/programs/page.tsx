@@ -9,7 +9,8 @@ export default function ProgramsPage() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ title: "", desc: "", icon: "" });
+  const [form, setForm] = useState({ title: "", desc: "", icon: "", image: "", link: "" });
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const refresh = async () => {
@@ -39,12 +40,23 @@ export default function ProgramsPage() {
     e.preventDefault();
     if (!token) return;
     const url = editingId ? `${API}/dashboard/programs/${editingId}` : `${API}/dashboard/programs`;
+    const formData = new FormData();
+    formData.append("title", form.title);
+    formData.append("desc", form.desc);
+    formData.append("icon", form.icon);
+    formData.append("link", form.link);
+    if (imageFile) {
+      formData.append("image", imageFile);
+    } else if (form.image) {
+      formData.append("image", form.image);
+    }
     await fetch(url, {
       method: editingId ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(form),
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
-    setForm({ title: "", desc: "", icon: "" });
+    setForm({ title: "", desc: "", icon: "", image: "", link: "" });
+    setImageFile(null);
     setEditingId(null);
     refresh();
   };
@@ -64,6 +76,12 @@ export default function ProgramsPage() {
       <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <input className="input-field" placeholder="عنوان البرنامج" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
         <input className="input-field" placeholder="أيقونة (نص أو رمز)" value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} />
+        <input className="input-field" placeholder="رابط صورة البرنامج" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} />
+        <div className="flex items-center gap-3">
+          <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
+          {imageFile && <span className="text-sm text-slate-600">{imageFile.name}</span>}
+        </div>
+        <input className="input-field" placeholder="رابط التفاصيل أو اتركه لصفحة التفاصيل" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} />
         <textarea className="input-field md:col-span-2" placeholder="الوصف" value={form.desc} onChange={(e) => setForm({ ...form, desc: e.target.value })} required rows={3} />
         <button type="submit" className="md:col-span-2 bg-teal-600 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2">
           {editingId ? <Edit3 size={18}/> : <Plus size={18}/>}
@@ -80,7 +98,14 @@ export default function ProgramsPage() {
               <p className="text-sm text-slate-600">{program.desc}</p>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => { setEditingId(program.id); setForm({ title: program.title, desc: program.desc, icon: program.icon }); }} className="text-slate-600 hover:text-teal-700"><Edit3 size={18}/></button>
+              <button
+                onClick={() => {
+                  setEditingId(program.id);
+                  setForm({ title: program.title, desc: program.desc, icon: program.icon, image: program.image || "", link: program.link || "" });
+                  setImageFile(null);
+                }}
+                className="text-slate-600 hover:text-teal-700"
+              ><Edit3 size={18}/></button>
               <button onClick={() => handleDelete(program.id)} className="text-red-500 hover:text-red-700"><Trash2 size={18}/></button>
             </div>
           </div>

@@ -18,9 +18,11 @@ export default function DashboardHome() {
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null);
 
   const [initForm, setInitForm] = useState({ title: "", desc: "", tag: "", amount: "", image: "", link: "" });
+  const [initImageFile, setInitImageFile] = useState<File | null>(null);
   const [editingInit, setEditingInit] = useState<number | null>(null);
 
   const [programForm, setProgramForm] = useState({ title: "", desc: "", icon: "", image: "", link: "" });
+  const [programImageFile, setProgramImageFile] = useState<File | null>(null);
   const [editingProgram, setEditingProgram] = useState<number | null>(null);
 
   const refresh = async () => {
@@ -89,12 +91,24 @@ export default function DashboardHome() {
     e.preventDefault();
     if (!token) return;
     const url = editingInit ? `${API}/dashboard/initiatives/${editingInit}` : `${API}/dashboard/initiatives`;
+    const formData = new FormData();
+    formData.append("title", initForm.title);
+    formData.append("desc", initForm.desc);
+    formData.append("tag", initForm.tag);
+    formData.append("amount", initForm.amount);
+    formData.append("link", initForm.link);
+    if (initImageFile) {
+      formData.append("image", initImageFile);
+    } else if (initForm.image) {
+      formData.append("image", initForm.image);
+    }
     await fetch(url, {
       method: editingInit ? "PUT" : "POST",
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(initForm)
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
     setInitForm({ title: "", desc: "", tag: "", amount: "", image: "", link: "" });
+    setInitImageFile(null);
     setEditingInit(null);
     refresh();
   };
@@ -110,12 +124,23 @@ export default function DashboardHome() {
     e.preventDefault();
     if (!token) return alert("الرجاء تسجيل الدخول مجدداً");
     const url = editingProgram ? `${API}/dashboard/programs/${editingProgram}` : `${API}/dashboard/programs`;
+    const formData = new FormData();
+    formData.append("title", programForm.title);
+    formData.append("desc", programForm.desc);
+    formData.append("icon", programForm.icon);
+    formData.append("link", programForm.link);
+    if (programImageFile) {
+      formData.append("image", programImageFile);
+    } else if (programForm.image) {
+      formData.append("image", programForm.image);
+    }
     await fetch(url, {
       method: editingProgram ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(programForm),
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
     setProgramForm({ title: "", desc: "", icon: "", image: "", link: "" });
+    setProgramImageFile(null);
     setEditingProgram(null);
     refresh();
   };
@@ -196,7 +221,11 @@ export default function DashboardHome() {
           <input className="input-field" placeholder="الوسم (مثال: مياه)" value={initForm.tag} onChange={e => setInitForm({ ...initForm, tag: e.target.value })} required />
           <input className="input-field" placeholder="المبلغ (مثال: 500 ر.س)" value={initForm.amount} onChange={e => setInitForm({ ...initForm, amount: e.target.value })} />
           <input className="input-field" placeholder="رابط صورة المبادرة" value={initForm.image} onChange={e => setInitForm({ ...initForm, image: e.target.value })} />
-          <input className="input-field" placeholder="رابط التفاصيل" value={initForm.link} onChange={e => setInitForm({ ...initForm, link: e.target.value })} />
+          <div className="flex items-center gap-3">
+            <input type="file" accept="image/*" onChange={(e) => setInitImageFile(e.target.files?.[0] || null)} />
+            {initImageFile && <span className="text-sm text-slate-600">{initImageFile.name}</span>}
+          </div>
+          <input className="input-field" placeholder="رابط التفاصيل أو اتركه لصفحة التفاصيل" value={initForm.link} onChange={e => setInitForm({ ...initForm, link: e.target.value })} />
           <textarea className="input-field md:col-span-2" placeholder="الوصف" value={initForm.desc} onChange={e => setInitForm({ ...initForm, desc: e.target.value })} required rows={3} />
           <button type="submit" className="md:col-span-2 bg-teal-600 text-white font-bold py-3 rounded-lg hover:bg-teal-700 transition flex items-center justify-center gap-2">
             {editingInit ? <Edit3 size={18}/> : <Plus size={18}/>} {editingInit ? "تحديث" : "حفظ"}
@@ -214,6 +243,7 @@ export default function DashboardHome() {
                 <button
                   onClick={() => {
                     setEditingInit(item.id);
+                    setInitImageFile(null);
                     setInitForm({
                       title: item.title,
                       desc: item.desc,
@@ -256,9 +286,13 @@ export default function DashboardHome() {
             value={programForm.image}
             onChange={(e) => setProgramForm({ ...programForm, image: e.target.value })}
           />
+          <div className="flex items-center gap-3">
+            <input type="file" accept="image/*" onChange={(e) => setProgramImageFile(e.target.files?.[0] || null)} />
+            {programImageFile && <span className="text-sm text-slate-600">{programImageFile.name}</span>}
+          </div>
           <input
             className="input-field"
-            placeholder="رابط التفاصيل"
+            placeholder="رابط التفاصيل أو اتركه لصفحة التفاصيل"
             value={programForm.link}
             onChange={(e) => setProgramForm({ ...programForm, link: e.target.value })}
           />
@@ -290,6 +324,7 @@ export default function DashboardHome() {
                 <button
                   onClick={() => {
                     setEditingProgram(program.id);
+                    setProgramImageFile(null);
                     setProgramForm({
                       title: program.title,
                       desc: program.desc,

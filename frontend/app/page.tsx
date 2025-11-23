@@ -97,7 +97,9 @@ export default async function Home() {
           {data.initiatives.length === 0 ? (
             <p className="text-center col-span-3 text-gray-500">لا توجد مبادرات حالياً</p>
           ) : (
-            data.initiatives.map((item) => (
+            data.initiatives.map((item) => {
+              const detailsLink = item.link || `/initiatives/${item.id}`;
+              return (
               <div key={item.id} className="group relative rounded-3xl overflow-hidden shadow-xl border border-teal-50 bg-white">
                 <div className="relative h-52">
                   <Image
@@ -122,7 +124,7 @@ export default async function Home() {
                   <div className="flex items-center justify-between pt-2">
                     {item.amount && <span className="text-teal-700 font-bold">{item.amount}</span>}
                     <Link
-                      href={item.link || "#"}
+                      href={detailsLink}
                       className="text-sm font-semibold text-teal-700 hover:text-teal-900 flex items-center gap-2"
                     >
                       تفاصيل المبادرة
@@ -131,7 +133,8 @@ export default async function Home() {
                   </div>
                 </div>
               </div>
-            ))
+            );
+            })
           )}
         </div>
       </section>
@@ -153,7 +156,9 @@ export default async function Home() {
             {data.programs.length === 0 ? (
               <p className="text-center col-span-3 text-gray-500">لا توجد برامج حالياً</p>
             ) : (
-              data.programs.map((program) => (
+              data.programs.map((program) => {
+                const detailsLink = program.link || `/programs/${program.id}`;
+                return (
                 <div key={program.id} className="group bg-gradient-to-br from-white to-teal-50 rounded-3xl overflow-hidden shadow-xl border border-teal-100">
                   <div className="relative h-48">
                     <Image
@@ -176,7 +181,7 @@ export default async function Home() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-slate-500">عرض سريع</span>
                       <Link
-                        href={program.link || "#"}
+                        href={detailsLink}
                         className="text-sm font-semibold text-teal-700 hover:text-teal-900 flex items-center gap-2"
                       >
                         تفاصيل البرنامج
@@ -185,7 +190,8 @@ export default async function Home() {
                     </div>
                   </div>
                 </div>
-              ))
+              );
+              })
             )}
           </div>
         </div>
