@@ -285,20 +285,32 @@ app.get('/api/dashboard/initiatives', verifyToken, (req, res) => {
   res.json(data.initiatives);
 });
 
-app.post('/api/dashboard/initiatives', verifyToken, (req, res) => {
+app.post('/api/dashboard/initiatives', verifyToken, upload.single('image'), (req, res) => {
   const data = readContent();
-  const item = { id: Date.now(), ...req.body };
+  let imageUrl = req.body.image || '';
+  if (req.file) {
+    imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  }
+  const item = { id: Date.now(), ...req.body, image: imageUrl };
   data.initiatives.push(item);
   writeContent(data);
   res.json(item);
 });
 
-app.put('/api/dashboard/initiatives/:id', verifyToken, (req, res) => {
+app.put('/api/dashboard/initiatives/:id', verifyToken, upload.single('image'), (req, res) => {
   const data = readContent();
   const id = parseInt(req.params.id, 10);
   const idx = data.initiatives.findIndex((i) => i.id === id);
   if (idx === -1) return res.status(404).json({ message: 'Not found' });
-  data.initiatives[idx] = { ...data.initiatives[idx], ...req.body };
+
+  let imageUrl = data.initiatives[idx].image || '';
+  if (req.file) {
+    imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  } else if (req.body.image) {
+    imageUrl = req.body.image;
+  }
+
+  data.initiatives[idx] = { ...data.initiatives[idx], ...req.body, image: imageUrl };
   writeContent(data);
   res.json(data.initiatives[idx]);
 });
@@ -317,20 +329,32 @@ app.get('/api/dashboard/programs', verifyToken, (req, res) => {
   res.json(data.programs);
 });
 
-app.post('/api/dashboard/programs', verifyToken, (req, res) => {
+app.post('/api/dashboard/programs', verifyToken, upload.single('image'), (req, res) => {
   const data = readContent();
-  const item = { id: Date.now(), ...req.body };
+  let imageUrl = req.body.image || '';
+  if (req.file) {
+    imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  }
+  const item = { id: Date.now(), ...req.body, image: imageUrl };
   data.programs.push(item);
   writeContent(data);
   res.json(item);
 });
 
-app.put('/api/dashboard/programs/:id', verifyToken, (req, res) => {
+app.put('/api/dashboard/programs/:id', verifyToken, upload.single('image'), (req, res) => {
   const data = readContent();
   const id = parseInt(req.params.id, 10);
   const idx = data.programs.findIndex((p) => p.id === id);
   if (idx === -1) return res.status(404).json({ message: 'Not found' });
-  data.programs[idx] = { ...data.programs[idx], ...req.body };
+
+  let imageUrl = data.programs[idx].image || '';
+  if (req.file) {
+    imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  } else if (req.body.image) {
+    imageUrl = req.body.image;
+  }
+
+  data.programs[idx] = { ...data.programs[idx], ...req.body, image: imageUrl };
   writeContent(data);
   res.json(data.programs[idx]);
 });
